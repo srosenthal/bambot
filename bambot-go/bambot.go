@@ -15,15 +15,15 @@ import (
 func main() {
 	// PARAMETERS
 	username, exists := os.LookupEnv("BAMBOO_USERNAME")
-	if (!exists) {
+	if !exists {
 		panic("Missing BAMBOO_USERNAME environment variable")
 	}
 	password, exists := os.LookupEnv("BAMBOO_PASSWORD")
-	if (!exists) {
+	if !exists {
 		panic("Missing BAMBOO_PASSWORD environment variable")
 	}
 	bambooUrl, exists := os.LookupEnv("BAMBOO_URL")
-	if (!exists) {
+	if !exists {
 		panic("Missing BAMBOO_URL environment variable")
 	}
 
@@ -64,7 +64,7 @@ func logInToBamboo(bambooUrl string, username string, password string, httpClien
 		if err != nil {
 			panic(err)
 		}
-		if url.String() == bambooUrl + "/start.action" {
+		if url.String() == bambooUrl+"/start.action" {
 			fmt.Println("Successful login!")
 		} else {
 			panic("Failed login, redirected to " + url.String())
@@ -82,7 +82,7 @@ func logInToBamboo(bambooUrl string, username string, password string, httpClien
 }
 
 func handleBuildPlan(bambooUrl string, buildKey string, jSessionId string, httpClient *http.Client) {
-	rssUrl := fmt.Sprintf(bambooUrl + "/rss/createAllBuildsRssFeed.action?feedType=rssFailed&buildKey=%s", buildKey)
+	rssUrl := fmt.Sprintf("%s/rss/createAllBuildsRssFeed.action?feedType=rssFailed&buildKey=%s", bambooUrl, buildKey)
 	req, err := http.NewRequest("GET", rssUrl, nil)
 	if err != nil {
 		panic(err)
@@ -111,32 +111,37 @@ func handleBuildPlan(bambooUrl string, buildKey string, jSessionId string, httpC
 		return items[i].PublishedParsed.Format(time.RFC3339) > items[j].PublishedParsed.Format(time.RFC3339)
 	})
 	for _, item := range items {
-		fmt.Println("time --> ", item.PublishedParsed.Format(time.RFC3339))
-		fmt.Println("title ---> ", item.Title)
-		fmt.Println("link ---> ", item.Link)
-		//fmt.Println("description ---> ", item.Description) // This is useful but long, so don't print it out
+		publishedTime := item.PublishedParsed.Format(time.RFC3339)
+		fmt.Printf("\n%s: %s %s\n", publishedTime, item.Title, item.Link)
 
 		re := regexp.MustCompile(buildKey + "-([0-9]+).*")
 		buildNumber := re.FindStringSubmatch(item.Title)[1]
 
 		// Read the existing labels on this build to find out if we've already processed it
 		labels := getLabels(bambooUrl, buildKey, buildNumber, jSessionId, httpClient)
-		fmt.Printf("Found labels: %v", labels)
+		fmt.Printf("Found labels: %v\n", labels)
 
 		skipScan := false
 		for _, label := range labels {
 			if (label == "bambot-scanned") || strings.HasPrefix(label, "crab-") {
+				fmt.Println("Skipping scan of build " + item.Link + ": Bambot already scanned, or manually labeled")
 				skipScan = true
+				break
 			}
+		}
+		if skipScan {
+			continue
 		}
 
 		if strings.Contains(item.Title, "tests failed") {
 			// Skip this build, if Bamboo was able to parse the test failures we don't have any value to add
-			skipScan = true
+			fmt.Println("Skipping scan of build " + item.Link + ": Bamboo was able to parse the test failures")
+			continue
 		}
 
-		if skipScan {
-			fmt.Println("Skipping scan of build " + item.Link + "... already scanned, or Bamboo was able to parse the test failures")
+		timeSincePublish := time.Now().Sub(*item.PublishedParsed)
+		if timeSincePublish.Hours() > 24*7 {
+			fmt.Println("Skipping scan of build " + item.Link + ": too old, publish time " + publishedTime)
 			continue
 		}
 
@@ -178,7 +183,6 @@ func getLabels(bambooUrl string, buildKey string, buildNumber string, jSessionId
 		panic(err)
 	}
 
-	fmt.Println("Labels body is " + bodyStr)
 	re := regexp.MustCompile("data-label=\"([a-z0-9-]+)\"")
 	matches := re.FindAllStringSubmatch(bodyStr, -1)
 
@@ -213,7 +217,6 @@ func addLabel(bambooUrl string, buildKey string, buildNumber string, label strin
 		panic(err)
 	}
 
-	fmt.Println("Labels body is " + bodyStr)
 	re := regexp.MustCompile("data-label=\"([a-z0-9-]+)\"")
 	matches := re.FindAllStringSubmatch(bodyStr, -1)
 
@@ -237,22 +240,16 @@ func addComment(bambooUrl string, buildKey string, buildNumber string, commentCo
 	if err != nil {
 		panic(err)
 	}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		panic(err)
-	}
-	bodyStr := string(body)
 	err = resp.Body.Close()
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("Response body is " + bodyStr)
 	return
 }
 
 type ScanResult struct {
-	Comment string
-	LogSnippet string
+	Comment     string
+	LogSnippet  string
 	JiraIssueId string
 }
 
@@ -293,56 +290,32 @@ func scanBuild(bambooUrl string, buildKey string, buildNumber string, jSessionId
 	bodyStr := string(body)
 
 	// Now, try to figure out the cause of the build failure!
-	startIndex := strings.Index(bodyStr, "[ERROR] COMPILATION ERROR")
-	if startIndex >= 0 {
-		// It's a compilation error. Let's extract some context.
-		afterStr := bodyStr[startIndex:]
-		endPattern := "[INFO] ------------------------------------------------------------------------"
-		endIndex := strings.Index(afterStr, endPattern)
-
-		if endIndex >= 0 {
-			context := afterStr[0 : endIndex+len(endPattern)]
-			return ScanResult{Comment:"Bambot detected a Java compilation error!", LogSnippet:context}
-		}
+	start := "[ERROR] COMPILATION ERROR"
+	end := "[INFO] ------------------------------------------------------------------------"
+	context := getSubstring(bodyStr, start, end)
+	if len(context) > 0 {
+		return ScanResult{Comment: "Bambot detected a Java compilation error!", LogSnippet: context}
 	}
 
-	startIndex = strings.Index(bodyStr, "Build FAILED.")
-	if startIndex >= 0 {
-		// It's a compilation error. Let's extract some context.
-		afterStr := bodyStr[startIndex:]
-		endPattern := "Error(s)"
-		endIndex := strings.Index(afterStr, endPattern)
-
-		if endIndex >= 0 {
-			context := afterStr[0 : endIndex+len(endPattern)]
-			return ScanResult{Comment:"Bambot detected a C# build failure!", LogSnippet:context}
-		}
+	start = "Build FAILED."
+	end = "Error(s)"
+	context = getSubstring(bodyStr, start, end)
+	if len(context) > 0 {
+		return ScanResult{Comment: "Bambot detected a C# build failure!", LogSnippet: context}
 	}
 
-	startIndex = strings.Index(bodyStr, "[WARNING] Rule violated for bundle")
-	if startIndex >= 0 {
-		// It's a compilation error. Let's extract some context.
-		afterStr := bodyStr[startIndex:]
-		endPattern := "Coverage checks have not been met. See log for details."
-		endIndex := strings.Index(afterStr, endPattern)
-
-		if endIndex >= 0 {
-			context := afterStr[0 : endIndex+len(endPattern)]
-			return ScanResult{Comment:"Bambot detected Java code coverage was below the required threshold!", LogSnippet:context}
-		}
+	start = "[WARNING] Rule violated for bundle"
+	end = "Coverage checks have not been met. See log for details."
+	context = getSubstring(bodyStr, start, end)
+	if len(context) > 0 {
+		return ScanResult{Comment: "Bambot detected Java code coverage was below the required threshold!", LogSnippet: context}
 	}
 
-	startIndex = strings.Index(bodyStr, "[INFO] BUILD FAILURE")
-	if startIndex >= 0 {
-		// It's a compilation error. Let's extract some context.
-		afterStr := bodyStr[startIndex:]
-		endPattern := "with result: Failed"
-		endIndex := strings.Index(afterStr, endPattern)
-
-		if endIndex >= 0 {
-			context := afterStr[0 : endIndex+len(endPattern)]
-			return ScanResult{Comment:"Bambot detected a Maven (Java build system) error!", LogSnippet:context}
-		}
+	start = "[INFO] BUILD FAILURE"
+	end = "with result: Failed"
+	context = getSubstring(bodyStr, start, end)
+	if len(context) > 0 {
+		return ScanResult{Comment: "Bambot detected a Maven (Java build system) error!", LogSnippet: context}
 	}
 
 	return nonMatch()
