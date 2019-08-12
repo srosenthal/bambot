@@ -39,8 +39,10 @@ func main() {
 	jSessionId := logInToBamboo(bambooUrl, username, password, httpClient)
 
 	for _, buildPlan := range buildPlans {
+		fmt.Printf("\n\n===== BUILD PLAN: %s =====\n", buildPlan)
 		handleBuildPlan(bambooUrl, buildPlan, jSessionId, httpClient)
 	}
+	fmt.Println("\n===== DONE! =====")
 }
 
 func logInToBamboo(bambooUrl string, username string, password string, httpClient *http.Client) string {
