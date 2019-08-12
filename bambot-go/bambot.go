@@ -123,25 +123,28 @@ func handleBuildPlan(bambooUrl string, buildKey string, jSessionId string, httpC
 
 		skipScan := false
 		for _, label := range labels {
-			if (label == "bambot-scanned") || strings.HasPrefix(label, "crab-") {
-				fmt.Println("Skipping scan of build " + item.Link + ": Bambot already scanned, or manually labeled")
+			if label == "bambot-scanned" {
+				fmt.Println("Skipping scan of build " + item.Link + ": Bambot already scanned")
 				skipScan = true
-				break
+			} else if strings.HasPrefix(label, "crab-") {
+				fmt.Println("Skipping scan of build " + item.Link + ": Already manually labeled")
+				skipScan = true
 			}
-		}
-		if skipScan {
-			continue
 		}
 
 		if strings.Contains(item.Title, "tests failed") {
 			// Skip this build, if Bamboo was able to parse the test failures we don't have any value to add
 			fmt.Println("Skipping scan of build " + item.Link + ": Bamboo was able to parse the test failures")
-			continue
+			skipScan = true
 		}
 
 		timeSincePublish := time.Now().Sub(*item.PublishedParsed)
 		if timeSincePublish.Hours() > 24*7 {
 			fmt.Println("Skipping scan of build " + item.Link + ": too old, publish time " + publishedTime)
+			skipScan = true
+		}
+
+		if skipScan {
 			continue
 		}
 
