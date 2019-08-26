@@ -77,6 +77,7 @@ func logInToBamboo(bambooUrl string, username string, password string, httpClien
 
 func handleAllBuilds(bambooUrl string, jSessionId string, httpClient *http.Client) {
 	scanStartTime := time.Now()
+	fmt.Println("Starting scan at ", scanStartTime)
 
 	counts := make(map[string]int)
 	counts["scanned"] = 0
@@ -206,10 +207,10 @@ func handleAllBuilds(bambooUrl string, jSessionId string, httpClient *http.Clien
 	}
 
 	elapsed := time.Since(scanStartTime)
-	fmt.Println("\nDONE!")
+	fmt.Println("\nFinished scan at ", time.Now())
 	fmt.Println("Stats: ", "scanned =", counts["scanned"], ", skipped =", counts["skipped"], ", commented =", counts["commented"])
 	fmt.Println("Oldest build was ", maxHoursSincePublish, " hours ago; youngest build was ", minHoursSincePublish, " hours ago")
-	fmt.Println("Time elapsed since start of scan: ", elapsed)
+	fmt.Println("It took ", elapsed, " to run the scan")
 }
 
 // Get the Bamboo labels on a build
