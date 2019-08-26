@@ -27,10 +27,6 @@ func main() {
 		panic("Missing BAMBOO_URL environment variable")
 	}
 
-	buildPlans := []string{
-		"CRAB-CUCS", "CRAB-UINST", "CRAB-CUO", "CRAB-CUS", "CRAB-CUD", "CRAB-CUU", "CRAB-CWCS", "CRAB-WINST",
-		"CRAB-WNL", "CRAB-CWO", "CRAB-SLOW", "CRAB-CWDS", "CRAB-CWS", "CRAB-CRABDEV", "CRAB-CWU", "CRAB-CWWS"}
-
 	httpClient := &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
@@ -38,11 +34,7 @@ func main() {
 	}
 	jSessionId := logInToBamboo(bambooUrl, username, password, httpClient)
 
-	for _, buildPlan := range buildPlans {
-		fmt.Printf("\n\n===== BUILD PLAN: %s =====\n", buildPlan)
-		handleBuildPlan(bambooUrl, buildPlan, jSessionId, httpClient)
-	}
-	fmt.Println("\n===== DONE! =====")
+	handleAllBuilds(bambooUrl, jSessionId, httpClient)
 }
 
 func logInToBamboo(bambooUrl string, username string, password string, httpClient *http.Client) string {
@@ -83,9 +75,17 @@ func logInToBamboo(bambooUrl string, username string, password string, httpClien
 	return jSessionId
 }
 
-func handleBuildPlan(bambooUrl string, buildKey string, jSessionId string, httpClient *http.Client) {
-	rssUrl := fmt.Sprintf("%s/rss/createAllBuildsRssFeed.action?feedType=rssFailed&buildKey=%s", bambooUrl, buildKey)
-	req, err := http.NewRequest("GET", rssUrl, nil)
+func handleAllBuilds(bambooUrl string, jSessionId string, httpClient *http.Client) {
+	scanStartTime := time.Now()
+
+	counts := make(map[string]int)
+	counts["scanned"] = 0
+	counts["skipped"] = 0
+	counts["commented"] = 0
+
+	maxResults := 100
+	atomUrl := fmt.Sprintf("%s/plugins/servlet/streams?local=true&maxResults=%d", bambooUrl, maxResults)
+	req, err := http.NewRequest("GET", atomUrl, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -102,8 +102,8 @@ func handleBuildPlan(bambooUrl string, buildKey string, jSessionId string, httpC
 	if err != nil {
 		panic(err)
 	}
-	rssFeedParser := gofeed.NewParser()
-	feed, err := rssFeedParser.ParseString(string(body))
+	atomFeedParser := gofeed.NewParser()
+	feed, err := atomFeedParser.ParseString(string(body))
 	if err != nil {
 		panic(err)
 	}
@@ -112,47 +112,84 @@ func handleBuildPlan(bambooUrl string, buildKey string, jSessionId string, httpC
 	sort.Slice(items, func(i, j int) bool {
 		return items[i].PublishedParsed.Format(time.RFC3339) > items[j].PublishedParsed.Format(time.RFC3339)
 	})
+	maxHoursSincePublish := -1.0
+	minHoursSincePublish := 9999.0
 	for _, item := range items {
+		fmt.Println()
+		if num, ok := counts["scanned"]; ok {
+			counts["scanned"] = num + 1
+		}
+
+		link := item.Link
 		publishedTime := item.PublishedParsed.Format(time.RFC3339)
-		fmt.Printf("\n%s: %s %s\n", publishedTime, item.Title, item.Link)
-
-		re := regexp.MustCompile(buildKey + "-([0-9]+).*")
-		buildNumber := re.FindStringSubmatch(item.Title)[1]
-
-		// Read the existing labels on this build to find out if we've already processed it
-		labels := getLabels(bambooUrl, buildKey, buildNumber, jSessionId, httpClient)
-		fmt.Printf("Found labels: %v\n", labels)
+		fmt.Print(link, " : ")
 
 		skipScan := false
-		for _, label := range labels {
-			if label == "bambot-scanned" {
-				fmt.Println("Skipping scan of build " + item.Link + ": Bambot already scanned")
-				skipScan = true
-			} else if strings.HasPrefix(label, "crab-") {
-				fmt.Println("Skipping scan of build " + item.Link + ": Already manually labeled")
+
+		// Keep only failures, which have a category of "build.failed"
+		for _, category := range item.Categories {
+			if category == "build.successful" {
+				fmt.Print("Skipping: Successful build ... ")
 				skipScan = true
 			}
 		}
 
-		if strings.Contains(item.Title, "tests failed") {
+		splitBySlash := strings.Split(link, "/");
+		buildId := splitBySlash[len(splitBySlash) - 1] // Ex: CRAB-CWS144-JOB1-33
+
+		splitByHyphen := strings.Split(buildId, "-");
+		if len(splitByHyphen) != 4 {
+			panic("Unexpected format of build ID: " + buildId)
+		}
+		buildNumber := splitByHyphen[3]
+		buildKey := strings.Join(splitByHyphen[0:2], "-")
+
+		// Read the existing labels on this build to find out if we've already processed it
+		labels := getLabels(bambooUrl, buildKey, buildNumber, jSessionId, httpClient)
+
+		for _, label := range labels {
+			if label == "bambot-scanned" {
+				fmt.Print("Skipping: Bambot already scanned ... ")
+				skipScan = true
+			} else if strings.HasPrefix(label, "crab-") {
+				fmt.Print("Skipping: Already manually labeled ... ")
+				skipScan = true
+			}
+		}
+
+		if strings.Contains(item.Content, "tests failed") {
 			// Skip this build, if Bamboo was able to parse the test failures we don't have any value to add
-			fmt.Println("Skipping scan of build " + item.Link + ": Bamboo was able to parse the test failures")
+			fmt.Print("Skipping: Bamboo found test failures ... ")
 			skipScan = true
 		}
 
 		timeSincePublish := time.Now().Sub(*item.PublishedParsed)
-		if timeSincePublish.Hours() > 24*7 {
-			fmt.Println("Skipping scan of build " + item.Link + ": too old, publish time " + publishedTime)
+		hoursSincePublish := timeSincePublish.Hours()
+		if hoursSincePublish > maxHoursSincePublish {
+			maxHoursSincePublish = hoursSincePublish
+		}
+		if hoursSincePublish < minHoursSincePublish {
+			minHoursSincePublish = hoursSincePublish
+		}
+		if hoursSincePublish > 24*7 {
+			fmt.Print("Skipping: too old:", publishedTime, "...")
 			skipScan = true
 		}
 
 		if skipScan {
+			if num, ok := counts["skipped"]; ok {
+				counts["skipped"] = num + 1
+			}
 			continue
 		}
 
 		scanResult := scanBuild(bambooUrl, buildKey, buildNumber, jSessionId, httpClient)
 
 		if scanResult.Comment != "" {
+			if num, ok := counts["commented"]; ok {
+				counts["commented"] = num + 1
+			}
+
 			commentContent := ""
 			commentContent += scanResult.Comment + "\n\n"
 			if scanResult.JiraIssueId != "" {
@@ -160,10 +197,19 @@ func handleBuildPlan(bambooUrl string, buildKey string, jSessionId string, httpC
 			}
 			commentContent += "Log snippet:\n" + scanResult.LogSnippet
 
+			fmt.Print("Adding comment & 'bambot-scanned' label")
 			addComment(bambooUrl, buildKey, buildNumber, commentContent, jSessionId, httpClient)
 			addLabel(bambooUrl, buildKey, buildNumber, "bambot-scanned", jSessionId, httpClient)
+		} else {
+			fmt.Print("Couldn't find cause of failure")
 		}
 	}
+
+	elapsed := time.Since(scanStartTime)
+	fmt.Println("\nDONE!")
+	fmt.Println("Stats: ", "scanned =", counts["scanned"], ", skipped =", counts["skipped"], ", commented =", counts["commented"])
+	fmt.Println("Oldest build was ", maxHoursSincePublish, " hours ago; youngest build was ", minHoursSincePublish, " hours ago")
+	fmt.Println("Time elapsed since start of scan: ", elapsed)
 }
 
 // Get the Bamboo labels on a build
@@ -265,7 +311,6 @@ func nonMatch() ScanResult {
 // Investigate a build -- if it failed and the cause could be identified, return information about it!
 func scanBuild(bambooUrl string, buildKey string, buildNumber string, jSessionId string, httpClient *http.Client) ScanResult {
 	downloadLogsUrl := bambooUrl + "/download/" + buildKey + "-JOB1/build_logs/" + buildKey + "-JOB1-" + buildNumber + ".log?disposition=attachment"
-	fmt.Println("downloadLogsUrl is ", downloadLogsUrl)
 
 	// Download the logs!
 	req, err := http.NewRequest("GET", downloadLogsUrl, nil)
@@ -279,7 +324,7 @@ func scanBuild(bambooUrl string, buildKey string, buildNumber string, jSessionId
 		panic(err)
 	}
 	if resp.StatusCode != 200 {
-		fmt.Println("Failed to download logs for build " + buildKey + "-" + buildNumber + ", tried URL " + downloadLogsUrl)
+		fmt.Print("Failed to download logs from", downloadLogsUrl)
 		return nonMatch()
 	}
 
@@ -321,6 +366,13 @@ func scanBuild(bambooUrl string, buildKey string, buildNumber string, jSessionId
 	context = getSubstring(bodyStr, start, end)
 	if len(context) > 0 {
 		return ScanResult{Comment: "Bambot detected a Maven (Java build system) error!", LogSnippet: context}
+	}
+
+	start = "ERROR in /home/bamboo"
+	end = "Aborted due to warnings."
+	context = getSubstring(bodyStr, start, end)
+	if len(context) > 0 {
+		return ScanResult{Comment: "Bambot detected a front-end (Webpack?) build error!", LogSnippet: context}
 	}
 
 	return nonMatch()
