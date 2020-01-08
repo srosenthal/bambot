@@ -6,7 +6,7 @@ Atlassian Bamboo is an automated build system like TeamCity, Jenkins, Travis, or
 
 
 # The Solution: Bambot
-Nagbot is a side project I developed at [Seeq](https://seeq.com) and launched in August 2019. It should be run on a schedule with a tool like cron or SystemD. Bambot scans the Atom feed of recent build failures, looks for known failure patterns, and posts a comment with an excerpt of the logs.
+Bambot is a side project I developed at [Seeq](https://seeq.com) and launched in August 2019. It should be run on a schedule with a tool like cron or SystemD. Bambot scans the Atom feed of recent build failures, looks for known failure patterns, and posts a comment with an excerpt of the logs.
 
 Here's what a Bambot comment looks like in Bamboo
 ![Example of Bambot's comment](https://github.com/srosenthal/bambot/blob/master/bambot-comment.png "Example of Bambot's comment")
