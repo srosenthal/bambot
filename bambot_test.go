@@ -24,6 +24,12 @@ func TestCSharpError(t *testing.T) {
     assertMatch(t, bodyStr, "Bambot detected a C# build error!")
 }
 
+func TestPythonError(t *testing.T) {
+    fileName := "test_files/python-1.log"
+    bodyStr := readFileToString(fileName)
+    assertMatch(t, bodyStr, "Bambot detected a Python error!")
+}
+
 func assertNonMatch(t *testing.T, bodyStr string) ScanResult {
     scanResult := scanString(bodyStr)
     if scanResult != nonMatch() {

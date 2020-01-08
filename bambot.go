@@ -135,10 +135,10 @@ func handleAllBuilds(bambooUrl string, jSessionId string, httpClient *http.Clien
 			}
 		}
 
-		splitBySlash := strings.Split(link, "/");
+		splitBySlash := strings.Split(link, "/")
 		buildId := splitBySlash[len(splitBySlash) - 1] // Ex: CRAB-CWS144-JOB1-33
 
-		splitByHyphen := strings.Split(buildId, "-");
+		splitByHyphen := strings.Split(buildId, "-")
 		if len(splitByHyphen) != 4 {
 			panic("Unexpected format of build ID: " + buildId)
 		}
@@ -380,6 +380,13 @@ func scanString(bodyStr string) ScanResult {
 	context = getSubstring(bodyStr, start, end)
 	if len(context) > 0 {
 		return ScanResult{Comment: "Bambot detected a Maven (Java build system) error!", LogSnippet: context}
+	}
+
+	start = "Traceback (most recent call last):"
+	end = "with result: Failed"
+	context = getSubstring(bodyStr, start, end)
+	if len(context) > 0 {
+		return ScanResult{Comment: "Bambot detected a Python error!", LogSnippet: context}
 	}
 
 	start = "ERROR in /home/bamboo"
