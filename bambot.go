@@ -340,12 +340,25 @@ func scanBuild(bambooUrl string, buildKey string, buildNumber string, jSessionId
 
 	bodyStr := string(body)
 
-	// Now, try to figure out the cause of the build failure!
+	return scanString(bodyStr)
+}
+
+// Given a log file, determine if it matches one of the known patterns for build failures
+func scanString(bodyStr string) ScanResult {
 	start := "[ERROR] COMPILATION ERROR"
 	end := "[INFO] ------------------------------------------------------------------------"
 	context := getSubstring(bodyStr, start, end)
 	if len(context) > 0 {
 		return ScanResult{Comment: "Bambot detected a Java compilation error!", LogSnippet: context}
+	}
+
+	// C# build logs seem to spread the error details across a large number of lines.
+	// So, we have two patterns to try to catch the areas of interest.
+	start = "Errors and Failures:"
+	end = "Error(s)"
+	context = getSubstring(bodyStr, start, end)
+	if len(context) > 0 {
+		return ScanResult{Comment: "Bambot detected a C# build error!", LogSnippet: context}
 	}
 
 	start = "Build FAILED."

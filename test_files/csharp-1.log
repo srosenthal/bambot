@@ -1,0 +1,19 @@
+...
+build 07-Jan-2020 07:31:47
+build 07-Jan-2020 07:31:47    Errors and Failures:
+build 07-Jan-2020 07:31:47    1) Test Failure : Seeq.Link.SDK.Utilities.DefaultConcurrentRequestsHandlerTest.testInterruptedRequest
+build 07-Jan-2020 07:31:47       Test exceeded Timeout value of 20000ms
+build 07-Jan-2020 07:31:47
+...
+build 07-Jan-2020 07:31:53  Done Building Project "C:\build\CRAB-SLOW55-JOB1\net-link\Seeq.Link.sln" (default targets) -- FAILED.
+build 07-Jan-2020 07:31:53
+build 07-Jan-2020 07:31:53  Build FAILED.
+build 07-Jan-2020 07:31:53
+...
+build 07-Jan-2020 07:31:53
+build 07-Jan-2020 07:31:53      1 Warning(s)
+build 07-Jan-2020 07:31:53      1 Error(s)
+build 07-Jan-2020 07:31:53
+build 07-Jan-2020 07:31:53  Time Elapsed 00:04:49.35
+...
+simple  07-Jan-2020 07:32:44  Finished building CRAB-SLOW55-JOB1-137.
