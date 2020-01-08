@@ -1,3 +1,5 @@
+Bambot ![Build Status](https://img.shields.io/circleci/build/github/srosenthal/bambot) ![License](https://img.shields.io/github/license/srosenthal/bambot)
+=========
 
 # The Problem
 Atlassian Bamboo is an automated build system like TeamCity, Jenkins, Travis, or CircleCI. It doesn't have the greatest user interface. When a build fails because of a test failure (say, JUnit), it does a good job of indicating that in the UI. But if the build fails for less common reasons (compilation error, missing code coverage, etc.), you have to resort to opening the build logs, and searching for the failure. Seeq's build logs are long and unfriendly to new developers, so this isn't much fun at all!
