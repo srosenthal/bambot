@@ -2,6 +2,7 @@ package main
 
 import (
     "io/ioutil"
+    "strings"
     "testing"
 )
 
@@ -11,13 +12,6 @@ func TestTruncateLines(t *testing.T) {
     assertEquals(t, truncateLines(str, 6), "123...\nABC...\nX\n\n")
     assertEquals(t, truncateLines(str, 5), "12...\nAB...\nX\n\n")
     assertEquals(t, truncateLines(str, 4), "1...\nA...\nX\n\n")
-}
-
-func assertEquals(t *testing.T, str string, expectedStr string) string {
-    if str != expectedStr {
-        t.Errorf("expected '%s' but got '%s'", str, expectedStr)
-    }
-    return str
 }
 
 func TestMatchEdgeCases(t *testing.T) {
@@ -49,6 +43,36 @@ func TestGenericError(t *testing.T) {
     fileName := "test_files/generic.log"
     bodyStr := readFileToString(fileName)
     assertMatch(t, bodyStr, "Bambot detected an error!")
+}
+
+// When there are multiple matches, we want to identify only the last match present in the log file
+func TestMultipleMatchesGenericError(t *testing.T) {
+    fileName := "test_files/generic-multiple-matches.log"
+    bodyStr := readFileToString(fileName)
+    scanResult := assertMatch(t, bodyStr, "Bambot detected an error!")
+    assertContains(t, scanResult.LogSnippet, "<this should be included>")
+    assertNotContains(t, scanResult.LogSnippet, "<this should not be included>")
+}
+
+func assertEquals(t *testing.T, str string, expectedStr string) string {
+    if str != expectedStr {
+        t.Errorf("expected '%s' but got '%s'", str, expectedStr)
+    }
+    return str
+}
+
+func assertContains(t *testing.T, str string, subStr string) string {
+    if strings.Index(str, subStr) < 0 {
+        t.Errorf("expected '%s' to contain '%s' but it did not", str, subStr)
+    }
+    return str
+}
+
+func assertNotContains(t *testing.T, str string, subStr string) string {
+    if strings.Index(str, subStr) >= 0 {
+        t.Errorf("expected '%s' to not contain '%s' but it did", str, subStr)
+    }
+    return str
 }
 
 func assertNonMatch(t *testing.T, bodyStr string) ScanResult {

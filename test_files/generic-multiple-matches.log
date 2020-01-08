@@ -1,0 +1,11 @@
+...
+build	02-Jan-2020 17:51:16	<this should not be included>
+build	02-Jan-2020 17:51:16	***** ERROR *****
+build	02-Jan-2020 17:51:16	<this should not be included>
+simple	02-Jan-2020 17:51:16	Finished task 'sq test' with result: Failed
+...
+build	02-Jan-2020 17:52:16	<this should not be included>
+build	02-Jan-2020 17:52:16	***** ERROR *****
+build	02-Jan-2020 17:52:16	<this should be included>
+simple	02-Jan-2020 17:52:16	Finished task 'sq test' with result: Failed
+...

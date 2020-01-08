@@ -409,13 +409,14 @@ func scanString(bodyStr string) ScanResult {
 // Get a portion of a string based on a start pattern and end pattern. The result will include both start & end.
 // If no result is found, an empty string will be returned.
 func getSubstring(input string, start string, end string) string {
-	startIndex := strings.Index(input, start)
-	if startIndex >= 0 {
-		afterStart := input[startIndex:]
-		endIndex := strings.Index(afterStart, end)
+	endIndex := strings.LastIndex(input, end)
+	if endIndex >= 0 {
+		beforeEnd := input[:endIndex]
+		startIndex := strings.LastIndex(beforeEnd, start)
 
-		if endIndex >= 0 {
-			fullSnippet := afterStart[0 : endIndex+len(end)]
+		if startIndex >= 0 {
+			fullSnippet := beforeEnd[startIndex:]
+
 			// In case there are any super wide log lines, truncate them to a reasonable width
 			snippet := truncateLines(fullSnippet, 120)
 			return snippet
