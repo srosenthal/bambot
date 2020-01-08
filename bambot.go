@@ -382,6 +382,13 @@ func scanString(bodyStr string) ScanResult {
 		return ScanResult{Comment: "Bambot detected a Maven (Java build system) error!", LogSnippet: context}
 	}
 
+	start = "***** ERROR *****"
+	end = "with result: Failed"
+	context = getSubstring(bodyStr, start, end)
+	if len(context) > 0 {
+		return ScanResult{Comment: "Bambot detected an error!", LogSnippet: context}
+	}
+
 	start = "Traceback (most recent call last):"
 	end = "with result: Failed"
 	context = getSubstring(bodyStr, start, end)
@@ -408,8 +415,30 @@ func getSubstring(input string, start string, end string) string {
 		endIndex := strings.Index(afterStart, end)
 
 		if endIndex >= 0 {
-			return afterStart[0 : endIndex+len(end)]
+			fullSnippet := afterStart[0 : endIndex+len(end)]
+			// In case there are any super wide log lines, truncate them to a reasonable width
+			snippet := truncateLines(fullSnippet, 120)
+			return snippet
 		}
 	}
 	return ""
+}
+
+// Given a multi-line string, truncate each line to be no wider than maxWidth,
+// adding an ellipsis (...) any place that is truncated
+func truncateLines(bodyStr string, maxWidth int) string {
+	lines := strings.Split(bodyStr, "\n")
+	var result strings.Builder
+	for idx, line := range lines {
+		if len(line) > maxWidth {
+			result.WriteString(line[0:maxWidth - 3])
+			result.WriteString("...")
+		} else {
+			result.WriteString(line)
+		}
+		if idx < len(lines) - 1 {
+			result.WriteString("\n")
+		}
+	}
+	return result.String()
 }

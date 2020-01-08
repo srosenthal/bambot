@@ -5,6 +5,21 @@ import (
     "testing"
 )
 
+func TestTruncateLines(t *testing.T) {
+    str := "12345678\nABCDEFGH\nX\n\n"
+    assertEquals(t, truncateLines(str, 7), "1234...\nABCD...\nX\n\n")
+    assertEquals(t, truncateLines(str, 6), "123...\nABC...\nX\n\n")
+    assertEquals(t, truncateLines(str, 5), "12...\nAB...\nX\n\n")
+    assertEquals(t, truncateLines(str, 4), "1...\nA...\nX\n\n")
+}
+
+func assertEquals(t *testing.T, str string, expectedStr string) string {
+    if str != expectedStr {
+        t.Errorf("expected '%s' but got '%s'", str, expectedStr)
+    }
+    return str
+}
+
 func TestMatchEdgeCases(t *testing.T) {
     assertNonMatch(t, "")
     assertNonMatch(t, "\n")
@@ -28,6 +43,12 @@ func TestPythonError(t *testing.T) {
     fileName := "test_files/python-1.log"
     bodyStr := readFileToString(fileName)
     assertMatch(t, bodyStr, "Bambot detected a Python error!")
+}
+
+func TestGenericError(t *testing.T) {
+    fileName := "test_files/generic.log"
+    bodyStr := readFileToString(fileName)
+    assertMatch(t, bodyStr, "Bambot detected an error!")
 }
 
 func assertNonMatch(t *testing.T, bodyStr string) ScanResult {
