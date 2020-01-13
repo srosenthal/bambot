@@ -54,6 +54,12 @@ func TestMultipleMatchesGenericError(t *testing.T) {
     assertNotContains(t, scanResult.LogSnippet, "<this should not be included>")
 }
 
+func TestGruntError(t *testing.T) {
+    fileName := "test_files/grunt-1.log"
+    bodyStr := readFileToString(fileName)
+    assertMatch(t, bodyStr, "Bambot detected a front-end Grunt build error!")
+}
+
 func assertEquals(t *testing.T, str string, expectedStr string) string {
     if str != expectedStr {
         t.Errorf("expected '%s' but got '%s'", str, expectedStr)
