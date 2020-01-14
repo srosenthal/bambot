@@ -1,4 +1,4 @@
-Bambot ![Build Status](https://img.shields.io/circleci/build/github/srosenthal/bambot) ![License](https://img.shields.io/github/license/srosenthal/bambot)
+Bambot [![Build Status](https://img.shields.io/circleci/build/github/srosenthal/bambot)](https://circleci.com/gh/srosenthal/bambot) [![License](https://img.shields.io/github/license/srosenthal/bambot)](https://github.com/srosenthal/bambot/blob/master/LICENSE)
 =========
 
 # The Problem
