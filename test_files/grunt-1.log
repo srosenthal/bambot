@@ -1,0 +1,44 @@
+...
+build	13-Jan-2020 17:01:14	> node postinstall || echo "ignore"
+build	13-Jan-2020 17:01:14	
+build	13-Jan-2020 17:01:14	added 498 packages in 4.438s
+build	13-Jan-2020 17:01:14	====== Seeq Build Step: Building with Grunt
+build	13-Jan-2020 17:01:14	[4mRunning "lint" task[24m
+build	13-Jan-2020 17:01:14	
+build	13-Jan-2020 17:01:14	[4mRunning "format_jasmine_functions" task[24m
+build	13-Jan-2020 17:01:15	
+build	13-Jan-2020 17:01:15	[4mRunning "shell:eslint" (shell) task[24m
+build	13-Jan-2020 17:01:18	error: Expected a line break after this opening brace (object-curly-newline) at server/test/screenshot.test.js:172:35:
+build	13-Jan-2020 17:01:18	  170 |                   expect.objectContaining({ viewport: { width: 10000, height: 10000, deviceScaleFactor: 1 } }));
+build	13-Jan-2020 17:01:18	  171 |             }),
+build	13-Jan-2020 17:01:18	> 172 |           () => suiteContext.test({ contentSelector: '.content', height: 1000, width: 500, scale: 5 })
+build	13-Jan-2020 17:01:18	      |                                   ^
+build	13-Jan-2020 17:01:18	  173 |             .then(() => {
+build	13-Jan-2020 17:01:18	  174 |               expect(suiteContext.headlessCapture.run)
+build	13-Jan-2020 17:01:18	  175 |                 .toHaveBeenCalledWith(suiteContext.poolId,
+build	13-Jan-2020 17:01:18	
+build	13-Jan-2020 17:01:18	
+build	13-Jan-2020 17:01:18	error: Expected a line break before this closing brace (object-curly-newline) at server/test/screenshot.test.js:172:101:
+build	13-Jan-2020 17:01:18	  170 |                   expect.objectContaining({ viewport: { width: 10000, height: 10000, deviceScaleFactor: 1 } }));
+build	13-Jan-2020 17:01:18	  171 |             }),
+build	13-Jan-2020 17:01:18	> 172 |           () => suiteContext.test({ contentSelector: '.content', height: 1000, width: 500, scale: 5 })
+build	13-Jan-2020 17:01:18	      |                                                                                                     ^
+build	13-Jan-2020 17:01:18	  173 |             .then(() => {
+build	13-Jan-2020 17:01:18	  174 |               expect(suiteContext.headlessCapture.run)
+build	13-Jan-2020 17:01:18	  175 |                 .toHaveBeenCalledWith(suiteContext.poolId,
+build	13-Jan-2020 17:01:18	
+build	13-Jan-2020 17:01:18	
+build	13-Jan-2020 17:01:18	2 errors found.
+build	13-Jan-2020 17:01:18	2 errors potentially fixable with the `--fix` option.
+build	13-Jan-2020 17:01:18	[33mWarning: Command failed: eslint "**/*.js" --format codeframe 
+build	13-Jan-2020 17:01:18	 Use --force to continue.[39m
+build	13-Jan-2020 17:01:18	
+build	13-Jan-2020 17:01:18	[31mAborted due to warnings.[39m
+build	13-Jan-2020 17:01:18	
+build	13-Jan-2020 17:01:18	
+build	13-Jan-2020 17:01:18	Execution Time (2020-01-13 17:01:14 UTC-0)
+build	13-Jan-2020 17:01:18	format_jasmine_functions  793ms  ▇▇▇▇▇▇▇▇▇ 24%
+build	13-Jan-2020 17:01:18	shell:eslint               2.6s  ▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇ 76%
+build	13-Jan-2020 17:01:18	Total 3.4s
+build	13-Jan-2020 17:01:18	
+...

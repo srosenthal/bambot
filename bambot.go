@@ -396,11 +396,11 @@ func scanString(bodyStr string) ScanResult {
 		return ScanResult{Comment: "Bambot detected a Python error!", LogSnippet: context}
 	}
 
-	start = "ERROR in /home/bamboo"
+	start = "Seeq Build Step: Building with Grunt"
 	end = "Aborted due to warnings."
 	context = getSubstring(bodyStr, start, end)
 	if len(context) > 0 {
-		return ScanResult{Comment: "Bambot detected a front-end (Webpack?) build error!", LogSnippet: context}
+		return ScanResult{Comment: "Bambot detected a front-end Grunt build error!", LogSnippet: context}
 	}
 
 	return nonMatch()
