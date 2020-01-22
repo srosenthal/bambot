@@ -10,3 +10,23 @@ Bambot is a side project I developed at [Seeq](https://seeq.com) and launched in
 
 Here's what a Bambot comment looks like in Bamboo
 ![Example of Bambot's comment](https://github.com/srosenthal/bambot/blob/master/bambot-comment.png "Example of Bambot's comment")
+
+# How to Contribute
+
+If you want to teach bambot how to detect a new type of build failure,
+`scanString` in `bambot.go` is responsible for identifying errors in the logs
+
+## If you have go installed
+
+* Clone [the repository](https://github.com/srosenthal/bambot)
+* Fetch dependencies: `go get -v -t -d ./...`
+* Run the tests: `go test -v ./...`
+* Make your change (be sure to add a test to `bambot_test.go`)
+* Put up changes for PR!
+
+## If you have docker installed
+
+* Clone [the repository](https://github.com/srosenthal/bambot)
+* Run the tests `docker build .`
+* Make your change (be sure to add a test to `bambot_test.go`)
+* Put up changes for PR!
