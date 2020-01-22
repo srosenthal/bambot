@@ -60,6 +60,12 @@ func TestGruntError(t *testing.T) {
     assertMatch(t, bodyStr, "Bambot detected a front-end Grunt build error!")
 }
 
+func TestCSharpTestError(t *testing.T) {
+    fileName := "test_files/csharp-test-1.log"
+    bodyStr := readFileToString(fileName)
+    assertMatch(t, bodyStr, "Bambot detected a C# unit test/integration test failure!")
+}
+
 func assertEquals(t *testing.T, str string, expectedStr string) string {
     if str != expectedStr {
         t.Errorf("expected '%s' but got '%s'", str, expectedStr)
