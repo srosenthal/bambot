@@ -403,6 +403,13 @@ func scanString(bodyStr string) ScanResult {
 		return ScanResult{Comment: "Bambot detected a front-end Grunt build error!", LogSnippet: context}
 	}
 
+	start = "Errors and Failures:"
+	end = "Committing..."
+	context = getSubstring(bodyStr, start, end)
+	if len(context) > 0 {
+		return ScanResult{Comment: "Bambot detected a C# unit test/integration test failure!", LogSnippet: context}
+	}
+
 	return nonMatch()
 }
 

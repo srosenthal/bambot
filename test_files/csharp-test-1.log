@@ -1,0 +1,32 @@
+...
+build	21-Jan-2020 23:23:52	Project "C:\build\CRAB-CWO301-JOB1\net-link\Seeq.Link.sln" (1) is building "C:\build\CRAB-CWO301-JOB1\net-link\sdk\Seeq.Link.SDK.TestRunner\Seeq.Link.SDK.TestRunner.csproj" (3) on node 1 (default targets).
+build	21-Jan-2020 23:23:52	Run:
+build	21-Jan-2020 23:23:52	  Creating directory "bin\Debug\".
+build	21-Jan-2020 23:23:52	  ..\..\packages\OpenCover.4.6.519\tools\OpenCover.Console.exe -register:user -target:"..\..\packages\NUnit.Runners.2.6.2\tools\nunit-console.exe" -targetargs:"..\Seeq.Link.SDK.Test\bin\Debug\Seeq.Link.SDK.Test.dll -nologo -noshadow -labels -domain=single -framework=4.0.30319  -result=bin\Debug\\nunit-result.xml" -returntargetcode -filter:"+[Seeq.Link.*]* -[*Test]* -[*]com.seeq.* " -output:bin\Debug\\CodeCoverage.xml
+build	21-Jan-2020 23:23:53	  Executing: C:\build\CRAB-CWO301-JOB1\net-link\packages\NUnit.Runners.2.6.2\tools\nunit-console.exe
+build	21-Jan-2020 23:23:54	  ProcessModel: Default    DomainUsage: Single
+build	21-Jan-2020 23:23:54	  Execution Runtime: v4.0
+...
+build	21-Jan-2020 23:25:54	  ***** Seeq.Link.SDK.Utilities.TimeIntervalTest.testIntervalFromDateTime
+build	21-Jan-2020 23:25:54	  ***** Seeq.Link.SDK.Utilities.TimeIntervalTest.testIntervalFromTimestamp
+build	21-Jan-2020 23:25:54	  ***** Seeq.Link.SDK.Utilities.TimeIntervalTest.testParseFriendlyDuration
+build	21-Jan-2020 23:25:54	  
+build	21-Jan-2020 23:25:54	  Tests run: 236, Errors: 0, Failures: 1, Inconclusive: 0, Time: 116.9813554 seconds
+build	21-Jan-2020 23:25:54	    Not run: 0, Invalid: 0, Ignored: 0, Skipped: 0
+build	21-Jan-2020 23:25:54	  
+build	21-Jan-2020 23:25:54	  Errors and Failures:
+build	21-Jan-2020 23:25:54	  1) Test Failure : Seeq.Link.SDK.Utilities.DefaultConcurrentRequestsHandlerTest.testInterruptedRequest
+build	21-Jan-2020 23:25:54	     Test exceeded Timeout value of 20000ms
+build	21-Jan-2020 23:25:54	  
+build	21-Jan-2020 23:25:54	  Committing...
+build	21-Jan-2020 23:25:54	  Visited Classes 83 of 92 (90.22)
+build	21-Jan-2020 23:25:54	  Visited Methods 531 of 582 (91.24)
+build	21-Jan-2020 23:25:54	  Visited Points 3893 of 4267 (91.24)
+build	21-Jan-2020 23:25:54	  Visited Branches 1247 of 1422 (87.69)
+build	21-Jan-2020 23:25:54	  
+build	21-Jan-2020 23:25:54	  ==== Alternative Results (includes all methods including those without corresponding source) ====
+build	21-Jan-2020 23:25:54	  Alternative Visited Classes 90 of 93 (96.77)
+build	21-Jan-2020 23:25:54	  Alternative Visited Methods 584 of 647 (90.26)
+build	21-Jan-2020 23:25:55	C:\build\CRAB-CWO301-JOB1\net-link\Seeq.Common.targets(47,5): error MSB3073: The command "..\..\packages\OpenCover.4.6.519\tools\OpenCover.Console.exe -register:user -target:"..\..\packages\NUnit.Runners.2.6.2\tools\nunit-console.exe" -targetargs:"..\Seeq.Link.SDK.Test\bin\Debug\Seeq.Link.SDK.Test.dll -nologo -noshadow -labels -domain=single -framework=4.0.30319  -result=bin\Debug\\nunit-result.xml" -returntargetcode -filter:"+[Seeq.Link.*]* -[*Test]* -[*]com.seeq.* " -output:bin\Debug\\CodeCoverage.xml" exited with code 1. [C:\build\CRAB-CWO301-JOB1\net-link\sdk\Seeq.Link.SDK.TestRunner\Seeq.Link.SDK.TestRunner.csproj]
+build	21-Jan-2020 23:25:55	Done Building Project "C:\build\CRAB-CWO301-JOB1\net-link\sdk\Seeq.Link.SDK.TestRunner\Seeq.Link.SDK.TestRunner.csproj" (default targets) -- FAILED.
+...
