@@ -77,6 +77,12 @@ func TestCSharpTestError(t *testing.T) {
     assertMatch(t, bodyStr, "Bambot detected a C# unit test/integration test failure!")
 }
 
+func TestPyTestError(t *testing.T) {
+    fileName := "test_files/python-pytest.log"
+    bodyStr := readFileToString(fileName)
+    assertMatch(t, bodyStr, "Bambot detected a Python pytest error!")
+}
+
 func assertEquals(t *testing.T, str string, expectedStr string) string {
     if str != expectedStr {
         t.Errorf("expected '%s' but got '%s'", expectedStr, str)

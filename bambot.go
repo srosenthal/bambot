@@ -389,6 +389,13 @@ func scanString(bodyStr string) ScanResult {
 		return ScanResult{Comment: "Bambot detected an error!", LogSnippet: context}
 	}
 
+	start = "=================================== FAILURES ==================================="
+	end = "with result: Failed"
+	context = getSubstring(bodyStr, start, end)
+	if len(context) > 0 {
+		return ScanResult{Comment: "Bambot detected a Python pytest error!", LogSnippet: context}
+	}
+
 	start = "Traceback (most recent call last):"
 	end = "with result: Failed"
 	context = getSubstring(bodyStr, start, end)

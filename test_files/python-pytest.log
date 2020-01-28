@@ -1,0 +1,17 @@
+...
+build	27-Jan-2020 21:37:33	spy/workbooks/tests/test_search.py::test_non_recursive PASSED            [ 97%]
+build	27-Jan-2020 21:37:39	spy/workbooks/tests/test_search.py::test_recursive PASSED                [ 98%]
+build	27-Jan-2020 21:37:40	spy/workbooks/tests/test_search.py::test_archived PASSED                 [100%]
+build	27-Jan-2020 21:37:40
+build	27-Jan-2020 21:37:40	=================================== FAILURES ===================================
+build	27-Jan-2020 21:37:40	_____________________________ test_push_repeatedly _____________________________
+...
+build	27-Jan-2020 21:37:40	E               Failed: DID NOT RAISE <class 'OSError'>
+build	27-Jan-2020 21:37:40
+build	27-Jan-2020 21:37:40	spy/workbooks/tests/test_save.py:20: Failed
+...
+build	27-Jan-2020 21:37:41	*****************************************************************
+build	27-Jan-2020 21:37:41	Command failed with exit code 1: sdk/sq test
+simple	27-Jan-2020 21:37:41	Failing task since return code of [/bin/sh /home/bamboo/bamboo-agent-home/temp/CRAB-CUO-JOB1-4463-ScriptBuildTask-1968760062508606596.sh test] was 1 while expected 0
+simple	27-Jan-2020 21:37:41	Finished task 'sq test' with result: Failed
+...
