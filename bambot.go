@@ -424,8 +424,8 @@ func getSubstring(input string, start string, end string) string {
 		if startIndex >= 0 {
 			fullSnippet := beforeEnd[startIndex:]
 
-			// In case there are any super wide log lines, truncate them to a reasonable width
-			snippet := truncateLines(fullSnippet, 120)
+			// In case the snippet is huge in either dimension, truncate it
+			snippet := truncateLines(fullSnippet, 120, 10000)
 			return snippet
 		}
 	}
@@ -433,9 +433,17 @@ func getSubstring(input string, start string, end string) string {
 }
 
 // Given a multi-line string, truncate each line to be no wider than maxWidth,
-// adding an ellipsis (...) any place that is truncated
-func truncateLines(bodyStr string, maxWidth int) string {
+// adding an ellipsis (...) any place that is truncated.
+// Then, limit the string to at most maxLines lines,
+// adding an ellipsis (...) at the end if the lines were truncated.
+func truncateLines(bodyStr string, maxWidth int, maxLines int) string {
 	lines := strings.Split(bodyStr, "\n")
+	var tooManyLines = false
+	if maxLines >= 0 && len(lines) > maxLines {
+		lines = lines[0:maxLines]
+		tooManyLines = true
+	}
+
 	var result strings.Builder
 	for idx, line := range lines {
 		if len(line) > maxWidth {
@@ -448,5 +456,9 @@ func truncateLines(bodyStr string, maxWidth int) string {
 			result.WriteString("\n")
 		}
 	}
+	if tooManyLines {
+		result.WriteString("\n...")
+	}
 	return result.String()
 }
+

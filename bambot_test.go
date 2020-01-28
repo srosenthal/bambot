@@ -8,10 +8,21 @@ import (
 
 func TestTruncateLines(t *testing.T) {
     str := "12345678\nABCDEFGH\nX\n\n"
-    assertEquals(t, truncateLines(str, 7), "1234...\nABCD...\nX\n\n")
-    assertEquals(t, truncateLines(str, 6), "123...\nABC...\nX\n\n")
-    assertEquals(t, truncateLines(str, 5), "12...\nAB...\nX\n\n")
-    assertEquals(t, truncateLines(str, 4), "1...\nA...\nX\n\n")
+
+    // Truncate for wide lines
+    assertEquals(t, truncateLines(str, 7, -1), "1234...\nABCD...\nX\n\n")
+    assertEquals(t, truncateLines(str, 6, -1), "123...\nABC...\nX\n\n")
+    assertEquals(t, truncateLines(str, 5, -1), "12...\nAB...\nX\n\n")
+    assertEquals(t, truncateLines(str, 4, -1), "1...\nA...\nX\n\n")
+
+    // Truncate for too many lines
+    assertEquals(t, truncateLines(str, 99, 4), "12345678\nABCDEFGH\nX\n\n...")
+    assertEquals(t, truncateLines(str, 99, 3), "12345678\nABCDEFGH\nX\n...")
+    assertEquals(t, truncateLines(str, 99, 2), "12345678\nABCDEFGH\n...")
+    assertEquals(t, truncateLines(str, 99, 1), "12345678\n...")
+
+    // Truncate for too wide and too many lines simultaneously
+    assertEquals(t, truncateLines(str, 6, 3), "123...\nABC...\nX\n...")
 }
 
 func TestMatchEdgeCases(t *testing.T) {
@@ -68,7 +79,7 @@ func TestCSharpTestError(t *testing.T) {
 
 func assertEquals(t *testing.T, str string, expectedStr string) string {
     if str != expectedStr {
-        t.Errorf("expected '%s' but got '%s'", str, expectedStr)
+        t.Errorf("expected '%s' but got '%s'", expectedStr, str)
     }
     return str
 }
