@@ -292,6 +292,13 @@ func addComment(bambooUrl string, buildKey string, buildNumber string, commentCo
 	if err != nil {
 		panic(err)
 	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		panic(err)
+	}
+	bodyStr := string(body)
+	err = resp.Body.Close()
+	fmt.Print("Status was: ", resp.Status, ", body was: ", bodyStr)
 	err = resp.Body.Close()
 	if err != nil {
 		panic(err)
