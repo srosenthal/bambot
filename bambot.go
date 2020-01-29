@@ -425,7 +425,7 @@ func getSubstring(input string, start string, end string) string {
 			fullSnippet := beforeEnd[startIndex:]
 
 			// In case the snippet is huge in either dimension, truncate it
-			snippet := truncateLines(fullSnippet, 120, 10000)
+			snippet := truncateLines(fullSnippet, 160, 2000)
 			return snippet
 		}
 	}
