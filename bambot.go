@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	b64 "encoding/base64"
+	"encoding/xml"
 	"fmt"
 	"github.com/mmcdole/gofeed"
 	"io/ioutil"
@@ -296,7 +298,7 @@ func addCommentWithApi(bambooUrl string, buildKey string, buildNumber string, co
 	addCommentUrl := bambooUrl + "/rest/api/latest/result/" + buildKey + "-" + buildNumber + "/comment?os_authType=basic"
 	reqBody := `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 	<comment>
-		<content>` + commentContent + `</content>
+		<content>` + escapeXmlString(commentContent) + `</content>
 	</comment>`
 	req, err := http.NewRequest("POST", addCommentUrl, strings.NewReader(reqBody))
 	if err != nil {
@@ -320,6 +322,15 @@ func addCommentWithApi(bambooUrl string, buildKey string, buildNumber string, co
 		panic(err)
 	}
 	return
+}
+
+func escapeXmlString(s string) string {
+	b := new(bytes.Buffer)
+	err := xml.EscapeText(b, []byte(s))
+	if err != nil {
+		panic(err)
+	}
+	return b.String()
 }
 
 type ScanResult struct {
