@@ -1,0 +1,37 @@
+...
+build	29-Jan-2020 06:59:05	====== Seeq Build Step: Building with Grunt
+build	29-Jan-2020 06:59:07	[4mRunning "lint" task[24m
+...
+build	29-Jan-2020 07:14:21	TOTAL: 10462 SUCCESS
+build	29-Jan-2020 07:14:22
+build	29-Jan-2020 07:14:22	[4mRunning "shell:jest_coverage" (shell) task[24m
+build	29-Jan-2020 07:22:22	........(node:6564) [DEP0066] DeprecationWarning: OutgoingMessage.prototype._headers is deprecated
+build	29-Jan-2020 07:26:22	......(node:6668) [DEP0066] DeprecationWarning: OutgoingMessage.prototype._headers is deprecated
+build	29-Jan-2020 08:29:57	.......................................................................
+build	29-Jan-2020 08:29:57
+build	29-Jan-2020 08:29:57
+build	29-Jan-2020 08:29:57	[4mRunning "shell:istanbul_report" (shell) task[24m
+build	29-Jan-2020 08:29:58
+build	29-Jan-2020 08:29:58	=============================== Coverage summary ===============================
+build	29-Jan-2020 08:29:58	Statements   : 88.74% ( 19094/21517 )
+build	29-Jan-2020 08:29:58	Branches     : 79.27% ( 7597/9584 )
+build	29-Jan-2020 08:29:58	Functions    : 86.99% ( 5722/6578 )
+build	29-Jan-2020 08:29:58	Lines        : 89.12% ( 18842/21142 )
+build	29-Jan-2020 08:29:58	================================================================================
+build	29-Jan-2020 08:29:59	Done
+build	29-Jan-2020 08:29:59
+build	29-Jan-2020 08:29:59	[4mRunning "shell:istanbul_check_coverage" (shell) task[24m
+build	29-Jan-2020 08:30:00	ERROR: Coverage for functions (86.99%) does not meet global threshold (87%)
+build	29-Jan-2020 08:30:00	[33mWarning: Command failed: istanbul check-coverage && echo Coverage meets or exceeds all thresholds
+build	29-Jan-2020 08:30:00	ERROR: Coverage for functions (86.99%) does not meet global threshold (87%)
+build	29-Jan-2020 08:30:00	 Use --force to continue.[39m
+build	29-Jan-2020 08:30:00
+build	29-Jan-2020 08:30:00	[31mAborted due to warnings.[39m
+build	29-Jan-2020 08:30:00
+...
+build	29-Jan-2020 08:30:00
+build	29-Jan-2020 08:30:00	Command failed with exit code 6: grunt --use-ie
+build	29-Jan-2020 08:30:00	Command failed with exit code 1: .\sq build -t -s
+simple	29-Jan-2020 08:30:02	Failing task since return code of [common\bootstrap\bamboo.bat build --slow] was 1 while expected 0
+simple	29-Jan-2020 08:30:02	Finished task 'sq build --slow' with result: Failed
+...

@@ -386,6 +386,13 @@ func scanString(bodyStr string) ScanResult {
 		return ScanResult{Comment: "Bambot detected a Java compilation error!", LogSnippet: context}
 	}
 
+	start = "ERROR: Coverage for"
+	end = "with result: Failed"
+	context = getSubstring(bodyStr, start, end)
+	if len(context) > 0 {
+		return ScanResult{Comment: "Bambot detected a Javascript coverage error!", LogSnippet: context}
+	}
+
 	// C# build logs seem to spread the error details across a large number of lines.
 	// So, we have two patterns to try to catch the areas of interest.
 	start = "Errors and Failures:"

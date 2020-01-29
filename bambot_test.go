@@ -59,6 +59,12 @@ func TestMultipleMatchesGenericError(t *testing.T) {
     assertNotContains(t, scanResult.LogSnippet, "<this should not be included>")
 }
 
+func TestJavascriptCoverageError(t *testing.T) {
+    fileName := "test_files/javascript-coverage.log"
+    bodyStr := readFileToString(fileName)
+    assertMatch(t, bodyStr, "Bambot detected a Javascript coverage error!")
+}
+
 func TestGruntError(t *testing.T) {
     fileName := "test_files/grunt-1.log"
     bodyStr := readFileToString(fileName)
