@@ -1,6 +1,7 @@
 package main
 
 import (
+	b64 "encoding/base64"
 	"fmt"
 	"github.com/mmcdole/gofeed"
 	"io/ioutil"
@@ -32,9 +33,18 @@ func main() {
 			return http.ErrUseLastResponse
 		},
 	}
-	jSessionId := logInToBamboo(bambooUrl, username, password, httpClient)
 
-	handleAllBuilds(bambooUrl, jSessionId, httpClient)
+	// Sometimes we use the JSessionID (to act like a browser)
+	// Other times we user an HTTP Basic authorization header (to use the REST API).
+	// The choice is based on which is easier and/or arbitrary historical choices.
+	jSessionId := logInToBamboo(bambooUrl, username, password, httpClient)
+	authHeader := buildAuthorizationHeader(username, password)
+
+	handleAllBuilds(bambooUrl, jSessionId, authHeader, httpClient)
+}
+
+func buildAuthorizationHeader(username string, password string) string {
+	return "Basic " + b64.StdEncoding.EncodeToString([]byte(username + ":" + password))
 }
 
 func logInToBamboo(bambooUrl string, username string, password string, httpClient *http.Client) string {
@@ -75,7 +85,7 @@ func logInToBamboo(bambooUrl string, username string, password string, httpClien
 	return jSessionId
 }
 
-func handleAllBuilds(bambooUrl string, jSessionId string, httpClient *http.Client) {
+func handleAllBuilds(bambooUrl string, jSessionId string, authHeader string, httpClient *http.Client) {
 	scanStartTime := time.Now()
 	fmt.Println("Starting scan at ", scanStartTime)
 
@@ -143,6 +153,9 @@ func handleAllBuilds(bambooUrl string, jSessionId string, httpClient *http.Clien
 			panic("Unexpected format of build ID: " + buildId)
 		}
 		buildNumber := splitByHyphen[3]
+
+		// According to the REST API, "buildKey" usually refers to CWS144 in the example above.
+		// But in other contexts (URL query parameters) it's CRAB-CWS144.
 		buildKey := strings.Join(splitByHyphen[0:2], "-")
 
 		// Read the existing labels on this build to find out if we've already processed it
@@ -198,11 +211,11 @@ func handleAllBuilds(bambooUrl string, jSessionId string, httpClient *http.Clien
 			}
 			commentContent += "Log snippet:\n" + scanResult.LogSnippet
 
-			fmt.Print("Adding comment & 'bambot-scanned' label")
-			addComment(bambooUrl, buildKey, buildNumber, commentContent, jSessionId, httpClient)
+			print("Adding comment & 'bambot-scanned' label")
+			addCommentWithApi(bambooUrl, buildKey, buildNumber, commentContent, authHeader, httpClient)
 			addLabel(bambooUrl, buildKey, buildNumber, "bambot-scanned", jSessionId, httpClient)
 		} else {
-			fmt.Print("Couldn't find cause of failure")
+			print("Couldn't find cause of failure")
 		}
 	}
 
@@ -279,27 +292,30 @@ func addLabel(bambooUrl string, buildKey string, buildNumber string, label strin
 	return labels
 }
 
-func addComment(bambooUrl string, buildKey string, buildNumber string, commentContent string, jSessionId string, httpClient *http.Client) {
-	addCommentUrl := bambooUrl + "/build/ajax/createComment.action"
-	reqBody := strings.NewReader(`buildKey=` + buildKey + `&buildNumber=` + buildNumber + `&commentContent=` + commentContent)
-	req, err := http.NewRequest("POST", addCommentUrl, reqBody)
+func addCommentWithApi(bambooUrl string, buildKey string, buildNumber string, commentContent string, authHeader string, httpClient *http.Client) {
+	addCommentUrl := bambooUrl + "/rest/api/latest/result/" + buildKey + "-" + buildNumber + "/comment?os_authType=basic"
+	reqBody := `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+	<comment>
+		<content>` + commentContent + `</content>
+	</comment>`
+	req, err := http.NewRequest("POST", addCommentUrl, strings.NewReader(reqBody))
 	if err != nil {
 		panic(err)
 	}
-	req.Header.Add("Cookie", "JSESSIONID="+jSessionId)
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("Authorization", authHeader)
+	req.Header.Set("Content-Type", "application/xml")
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		panic(err)
 	}
+	println("Sent a comment with length ", len(commentContent))
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		panic(err)
 	}
 	bodyStr := string(body)
 	err = resp.Body.Close()
-	fmt.Print("Status was: ", resp.Status, ", body was: ", bodyStr)
-	err = resp.Body.Close()
+	println("After posting a comment, status was: ", resp.Status, ", body was: ", bodyStr)
 	if err != nil {
 		panic(err)
 	}
