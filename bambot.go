@@ -4,6 +4,7 @@ import (
 	"bytes"
 	b64 "encoding/base64"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"github.com/mmcdole/gofeed"
 	"io/ioutil"
@@ -46,7 +47,7 @@ func main() {
 }
 
 func buildAuthorizationHeader(username string, password string) string {
-	return "Basic " + b64.StdEncoding.EncodeToString([]byte(username + ":" + password))
+	return "Basic " + b64.StdEncoding.EncodeToString([]byte(username+":"+password))
 }
 
 func logInToBamboo(bambooUrl string, username string, password string, httpClient *http.Client) string {
@@ -127,6 +128,10 @@ func handleAllBuilds(bambooUrl string, jSessionId string, authHeader string, htt
 	})
 	maxHoursSincePublish := -1.0
 	minHoursSincePublish := 9999.0
+
+	planNameToLastGoodCommit := make(map[string]string)
+	branchNamesToLastGoodCommits := make(map[string]string)
+
 	for _, item := range items {
 		fmt.Println()
 		if num, ok := counts["scanned"]; ok {
@@ -138,17 +143,19 @@ func handleAllBuilds(bambooUrl string, jSessionId string, authHeader string, htt
 		fmt.Print(link, " : ")
 
 		skipScan := false
+		isSuccess := false
 
 		// Keep only failures, which have a category of "build.failed"
 		for _, category := range item.Categories {
 			if category == "build.successful" {
 				fmt.Print("Skipping: Successful build ... ")
 				skipScan = true
+				isSuccess = true
 			}
 		}
 
 		splitBySlash := strings.Split(link, "/")
-		buildId := splitBySlash[len(splitBySlash) - 1] // Ex: CRAB-CWS144-JOB1-33
+		buildId := splitBySlash[len(splitBySlash)-1] // Ex: CRAB-CWS144-JOB1-33
 
 		splitByHyphen := strings.Split(buildId, "-")
 		if len(splitByHyphen) != 4 {
@@ -192,6 +199,20 @@ func handleAllBuilds(bambooUrl string, jSessionId string, authHeader string, htt
 			skipScan = true
 		}
 
+		if isSuccess {
+			result := getBuildResult(bambooUrl, buildKey, buildNumber, authHeader, httpClient)
+			if strings.Contains(buildKey, "CRAB-CWO") &&
+				result.BuildState == "Successful" {
+				// Consider only the most recent successful build on each branch
+				if _, present := planNameToLastGoodCommit[result.PlanName]; !present {
+					planNameToLastGoodCommit[result.PlanName] = result.VcsRevisionKey
+					if branchName, err := branchNameFromPlanName(result.PlanName); err == nil {
+						branchNamesToLastGoodCommits[branchName] = result.VcsRevisionKey
+					}
+				}
+			}
+		}
+
 		if skipScan {
 			if num, ok := counts["skipped"]; ok {
 				counts["skipped"] = num + 1
@@ -221,11 +242,80 @@ func handleAllBuilds(bambooUrl string, jSessionId string, authHeader string, htt
 		}
 	}
 
+	branchNamesToLastGoodCommitsString := mapToText(branchNamesToLastGoodCommits)
+	writeStringToFile("branchNamesToLastGoodCommits.txt", branchNamesToLastGoodCommitsString)
+
 	elapsed := time.Since(scanStartTime)
 	fmt.Println("\nFinished scan at ", time.Now())
 	fmt.Println("Stats: ", "scanned =", counts["scanned"], ", skipped =", counts["skipped"], ", commented =", counts["commented"])
 	fmt.Println("Oldest build was ", maxHoursSincePublish, " hours ago; youngest build was ", minHoursSincePublish, " hours ago")
 	fmt.Println("It took ", elapsed, " to run the scan")
+	fmt.Println("Branch names to commits:\n", branchNamesToLastGoodCommitsString)
+}
+
+func mapToText(theMap map[string]string) string {
+	var result strings.Builder
+	for key, value := range theMap {
+		result.WriteString(key)
+		result.WriteString(" ")
+		result.WriteString(value)
+		result.WriteString("\n")
+	}
+	return result.String()
+}
+
+func writeStringToFile(fileName string, text string) {
+	err := ioutil.WriteFile(fileName, []byte(text), 0644)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func branchNameFromPlanName(planName string) (string, error) {
+	if planName == "Windows Official" {
+		return "develop", nil
+	} else if strings.HasPrefix(planName, "release-") {
+		return strings.Replace(planName, "release-", "release/", 1), nil
+	} else {
+		return "", errors.New("only release branches are supported for tagging")
+	}
+}
+
+type BambooResult struct {
+	XMLName        xml.Name `xml:"result"`
+	PlanName       string   `xml:"planName"`
+	VcsRevisionKey string   `xml:"vcsRevisionKey"`
+	BuildState     string   `xml:"buildState"`
+}
+
+func getBuildResult(bambooUrl string, buildKey string, buildNumber string, authHeader string, httpClient *http.Client) BambooResult {
+	getDetailsUrl := bambooUrl + "/rest/api/latest/result/" + buildKey + "/" + buildNumber + "?expand=artifacts&expand=changes&expand=results.result.artifacts&expand=results.result.labels&expand=results.result.comments&expand=results.result.jiraIssues&expand=changes.change&expand=changes.change.files&expand=metadata"
+	req, err := http.NewRequest("GET", getDetailsUrl, nil)
+	if err != nil {
+		panic(err)
+	}
+	req.Header.Add("Authorization", authHeader)
+	req.Header.Set("Content-Type", "application/xml")
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		panic(err)
+	}
+
+	var parsedResult BambooResult
+	err = xml.Unmarshal(body, &parsedResult)
+	if err != nil {
+		panic(err)
+	}
+
+	err = resp.Body.Close()
+	if err != nil {
+		panic(err)
+	}
+	return parsedResult
 }
 
 // Get the Bamboo labels on a build
@@ -488,12 +578,12 @@ func truncateLines(bodyStr string, maxWidth int, maxLines int) string {
 	var result strings.Builder
 	for idx, line := range lines {
 		if len(line) > maxWidth {
-			result.WriteString(line[0:maxWidth - 3])
+			result.WriteString(line[0 : maxWidth-3])
 			result.WriteString("...")
 		} else {
 			result.WriteString(line)
 		}
-		if idx < len(lines) - 1 {
+		if idx < len(lines)-1 {
 			result.WriteString("\n")
 		}
 	}
@@ -502,4 +592,3 @@ func truncateLines(bodyStr string, maxWidth int, maxLines int) string {
 	}
 	return result.String()
 }
-
